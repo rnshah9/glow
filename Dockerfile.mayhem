@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.04 as builder
 
 ARG WORKDIR=/root/dev
 
@@ -45,3 +45,12 @@ WORKDIR /repo/build
 RUN cmake -G Ninja ..
 RUN ninja all
 RUN python /repo/utils/download_datasets_and_models.py -d fr2en
+
+RUN mkdir -p /deps
+RUN ldd ./bin/include-bin | tr -s '[:blank:]' '\n' | grep '^/' | xargs -I % sh -c 'cp % /deps;'
+
+FROM ubuntu:18.04 as package
+
+COPY --from=builder /deps /deps
+COPY --from=builder ./bin/include-bin ./bin/include-bin
+ENV LD_LIBRARY_PATH=/deps

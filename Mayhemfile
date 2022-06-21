@@ -1,6 +1,5 @@
-project: rnshah9/glow
-target: glow
-tests: null
+project: glow
+target: include-bin
 
 cmds:
   - cmd: ./bin/include-bin @@ out
