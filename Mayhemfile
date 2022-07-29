@@ -2,4 +2,4 @@ project: glow
 target: include-bin
 
 cmds:
-  - cmd: ./bin/include-bin @@ out
+  - cmd: /include-bin @@ out

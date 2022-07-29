@@ -37,11 +37,10 @@ RUN git clone https://github.com/fmtlib/fmt && \
     cmake .. && make -j8 && \
     make install
 
-# Clean up
-RUN rm -rf fmt
-
 COPY . /repo
 WORKDIR /repo/build
 RUN cmake -G Ninja ..
 RUN ninja all
-RUN python /repo/utils/download_datasets_and_models.py -d fr2en
+
+FROM ubuntu:18.04
+COPY --from=builder /repo/build/bin/include-bin /
