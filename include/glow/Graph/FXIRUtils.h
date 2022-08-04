@@ -30,6 +30,9 @@ namespace glow {
 /// Get ElemKind from typeStr.
 ElemKind getElemKind(const std::string &dtypeStr);
 
+/// Get the kwargs of the node.
+const folly::dynamic &getNodeKwargs(const folly::dynamic &node);
+
 /// Helper function to convert \p intArrayStr like "[1, 2, 3]" or "(1, 2, 3)"
 /// to vector [1, 2, 3]. If \p length is greater than 0, append the vector with
 /// last element to such length. \returns a vector of length size.
@@ -90,12 +93,6 @@ std::vector<T> toIntegerArray(const folly::dynamic &dyn,
   return vec;
 }
 
-template <class T> std::vector<T> getNodeStride(const folly::dynamic &node) {
-  CHECK(node.find("stride") != node.items().end())
-      << "stride field doesn't exist in node " << node;
-  return toIntegerArray<glow::dim_t>(node.at("stride").getString());
-}
-
 /// Get the opCode of the node.
 std::string getNodeOpCode(const folly::dynamic &node);
 
@@ -108,10 +105,36 @@ std::string getNodeTarget(const folly::dynamic &node);
 /// Get the data type of the node.
 ElemKind getNodeDataType(const folly::dynamic &node);
 
+bool hasFxOutTensorView(const folly::dynamic &node);
+
+const folly::dynamic &getFxOutTensorView(const folly::dynamic &node);
+
+std::string getNodeItemAsString(const folly::dynamic &node,
+                                const char *itemName);
+std::string getNodeShapeAsString(const folly::dynamic &node);
+std::string getNodeStrideAsString(const folly::dynamic &node);
+
+template <class T>
+std::vector<T> getNodeItem(const folly::dynamic &node, const char *itemName) {
+  const std::string itemString = getNodeItemAsString(node, itemName);
+  return toIntegerArray<glow::dim_t>(itemString);
+}
+
 template <class T> std::vector<T> getNodeShape(const folly::dynamic &node) {
-  CHECK(node.find("shape") != node.items().end())
-      << "shape field doesn't exist in node " << node;
-  return toIntegerArray<glow::dim_t>(node.at("shape").getString());
+  const std::string shapeString = getNodeShapeAsString(node);
+  return toIntegerArray<glow::dim_t>(shapeString);
+}
+
+template <class T> std::vector<T> getNodeStride(const folly::dynamic &node) {
+  const std::string strideString = getNodeStrideAsString(node);
+  return toIntegerArray<glow::dim_t>(strideString);
+}
+
+std::string getNodeOffsetsAsString(const folly::dynamic &node);
+
+template <class T> std::vector<T> getNodeOffsets(const folly::dynamic &node) {
+  const std::string offsetString = getNodeOffsetsAsString(node);
+  return toIntegerArray<glow::dim_t>(offsetString);
 }
 
 /// Checks if node's padded.
@@ -119,9 +142,6 @@ bool isNodePadded(const folly::dynamic &node);
 
 /// Get the arg of the node.
 const folly::dynamic &getNodeArgs(const folly::dynamic &node);
-
-/// Get the kwargs of the node.
-const folly::dynamic &getNodeKwargs(const folly::dynamic &node);
 
 template <class T> std::vector<T> getConvStride(const folly::dynamic &node) {
   const auto &inputs = getNodeKwargs(node);
@@ -175,6 +195,9 @@ int getNodeZeroPoint(const folly::dynamic &node);
 
 /// Get vector of offsets for Extract operations.
 std::vector<dim_t> getOffsets(const folly::dynamic &node);
+
+bool isInputFXNode(const folly::dynamic &node);
+bool isOutputFXNode(const folly::dynamic &node);
 
 } // namespace glow
 
